@@ -59,7 +59,7 @@ TARGETS: list[tuple[str, float, float, tuple[str, ...], float]] = [
     ("Lê Duẩn × Ngô Gia Tự", 16.07092, 108.21693, ("Lê Duẩn", "Ngô Gia Tự"), 0),
     ("Lê Duẩn × Lê Lợi", 16.07133, 108.22041, ("Lê Duẩn", "Lê Lợi"), 0),
     ("Lê Duẩn × Nguyễn Chí Thanh", 16.07146, 108.22110, ("Lê Duẩn", "Nguyễn Chí Thanh"), 0),
-    ("Lê Duẩn", 16.07161, 108.22271, ("Lê Duẩn",), 0),
+    ("Lê Duẩn × Trần Phú", 16.07182, 108.22402, ("Lê Duẩn", "Trần Phú"), 0),
     ("Cầu Sông Hàn Tây", 16.07189, 108.22484, ("Cầu Sông Hàn", "Lê Duẩn"), ABUT_SNAP_M - SNAP_M),
     ("Cầu Sông Hàn Đông", 16.07274, 108.23056, ("Cầu Sông Hàn", "Ngô Quyền", "Phạm Văn Đồng"), ABUT_SNAP_M - SNAP_M),
     # north Lê Lợi / Quang Trung

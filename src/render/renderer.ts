@@ -491,7 +491,7 @@ export class Renderer {
     ctx.font = `600 ${Math.max(9, 8 / this.cam.scale)}px Syne, sans-serif`;
     ctx.fillStyle = 'rgba(160, 200, 190, 0.45)';
     const seen = new Set<string>();
-    const want = ['Cầu Sông Hàn', 'Lê Duẩn', 'Lê Lợi', 'Ngô Quyền', 'Phạm Văn Đồng', 'Ngô Gia Tự'];
+    const want = ['Cầu Sông Hàn', 'Lê Duẩn', 'Trần Phú', 'Lê Lợi', 'Ngô Quyền', 'Phạm Văn Đồng', 'Ngô Gia Tự'];
     for (const l of sim.net.links) {
       const hit = want.find((w) => l.name.includes(w));
       if (!hit || seen.has(hit)) continue;
