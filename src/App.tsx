@@ -784,6 +784,47 @@ export function App() {
                     {mode === 'adaptive' ? t('ix.mpAdapt') : t('ix.mpCoord')}
                   </p>
                 )}
+                {(() => {
+                  const durs = sim.phaseDurations(selected);
+                  if (!durs) return null;
+                  const live = mode === 'adaptive' || mode === 'coord';
+                  return (
+                    <Tip tipKey="tip.ix.durations" preferBelow>
+                      <div className="phase-durs">
+                        <div className="phase-durs-hd">{t('ix.durations')}</div>
+                        <div className="phase-durs-grid">
+                          <div className="pd g">
+                            <span className="pd-l">{t('ix.gNS')}</span>
+                            <b>{Math.round(durs.gNS)}s</b>
+                          </div>
+                          <div className="pd y">
+                            <span className="pd-l">{t('ix.yellowSec')}</span>
+                            <b>{Math.round(durs.yellow)}s</b>
+                          </div>
+                          <div className="pd ar">
+                            <span className="pd-l">{t('ix.allRedSec')}</span>
+                            <b>{Math.round(durs.allRed)}s</b>
+                          </div>
+                          <div className="pd g">
+                            <span className="pd-l">{t('ix.gEW')}</span>
+                            <b>{Math.round(durs.gEW)}s</b>
+                          </div>
+                          <div className="pd y">
+                            <span className="pd-l">{t('ix.yellowSec')}</span>
+                            <b>{Math.round(durs.yellow)}s</b>
+                          </div>
+                          <div className="pd ar">
+                            <span className="pd-l">{t('ix.allRedSec')}</span>
+                            <b>{Math.round(durs.allRed)}s</b>
+                          </div>
+                        </div>
+                        <p className="hint phase-durs-hint">
+                          {live ? t('ix.durations.hintLive') : t('ix.durations.hintFixed')}
+                        </p>
+                      </div>
+                    </Tip>
+                  );
+                })()}
                 <Slider
                   tipKey="tip.ix.cycle"
                   label={t('ix.cycle')}

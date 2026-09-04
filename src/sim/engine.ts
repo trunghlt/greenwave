@@ -406,6 +406,23 @@ export class TrafficSim {
     return { gNS, gEW };
   }
 
+  /** Fixed-plan phase durations from current cycle & split (same formulas as greens). */
+  phaseDurations(i: number): {
+    gNS: number;
+    gEW: number;
+    yellow: number;
+    allRed: number;
+    cycle: number;
+    lost: number;
+  } | null {
+    const s = this.toSig(i);
+    if (s < 0) return null;
+    const x = this.ix[s];
+    const lost = this.lostTime(x.cycle);
+    const { gNS, gEW } = this.greens(x);
+    return { gNS, gEW, yellow: YELLOW, allRed: ALLRED, cycle: x.cycle, lost };
+  }
+
   /** Returns 0 NS green, 1 NS yellow, 2 all-red, 3 EW green, 4 EW yellow, 5 all-red */
   private fixedSlot(x: IxState, t: number) {
     const { gNS, gEW } = this.greens(x);

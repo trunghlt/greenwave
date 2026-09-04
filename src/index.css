@@ -428,6 +428,57 @@ button, input { font-family: inherit; }
 .lamp.Y { background: var(--amber); color: var(--amber); }
 .lamp.R { background: var(--red); color: var(--red); }
 
+.phase-durs {
+  margin: 4px 0 10px;
+  padding: 8px 8px 6px;
+  background: #0b1017;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.phase-durs-hd {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.phase-durs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+.phase-durs .pd {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 6px;
+  text-align: center;
+  min-width: 0;
+}
+.phase-durs .pd-l {
+  display: block;
+  font-size: 9px;
+  color: var(--faint);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.phase-durs .pd b {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.phase-durs .pd.g b { color: var(--green); }
+.phase-durs .pd.y b { color: var(--amber); }
+.phase-durs .pd.ar b { color: var(--muted); }
+.phase-durs-hint {
+  margin: 6px 2px 0 !important;
+  font-size: 10px !important;
+  line-height: 1.35;
+}
+
 .bars {
   display: flex; gap: 3px; align-items: flex-end; height: 28px; margin: 6px 0 2px;
 }

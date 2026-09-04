@@ -134,6 +134,15 @@ export const vi = {
     'Split là phần xanh N–S. Offset là lệch đồng hồ chủ — thứ làm nên sóng xanh. Sửa có hiệu lực ngay ở Cố định / Tối ưu.',
   'ix.empty':
     'Bấm một nút đèn đang sáng để xem hàng chờ, chỉnh cycle / split / offset, và theo dõi đếm pha.',
+  'ix.durations': 'Thời lượng pha',
+  'ix.gNS': 'Xanh N–S',
+  'ix.gEW': 'Xanh E–W',
+  'ix.yellowSec': 'Vàng',
+  'ix.allRedSec': 'All-red',
+  'ix.durations.hintFixed':
+    'Theo cycle & split hiện tại (Cố định / Tối ưu).',
+  'ix.durations.hintLive':
+    'Thích ứng / Điều phối: xanh sống trong 8–52s theo hàng chờ; bảng trên là kế hoạch nếu chuyển Cố định.',
 
   'net.title': 'Mạng',
   'net.blurb':
@@ -195,7 +204,7 @@ export const vi = {
   'tut.s7.title': 'Đọc HUD',
   'tut.s7.body':
     '<b>Chờ TB</b> là trễ chuyến đã xong, không phải tức thời. <b>p95</b> là đuôi khổ. <b>Lưu lượng</b> là xe/h. <b>Tải hàng</b> là áp lực, không phải số xe. Nếu chờ trông tệ hơn sau khi đổi chế độ giữa chừng, đặt lại rồi ghi mốc lại.',
-'tip.mode.fixed':
+  'tip.mode.fixed':
     'Kế hoạch cố định naive (split ~50/50), không điều phối. Dùng làm mốc A/B khi ùn chiều lên cầu. Sửa cycle/split/offset ở bảng nút.',
   'tip.mode.adaptive':
     'Mỗi nút tự chọn pha N–S / Đ–T theo áp lực hàng chờ (max-pressure nâng cao, trừ 0.6× hàng phía dưới). Không cần Optimize.',
@@ -266,6 +275,8 @@ export const vi = {
     'Phần xanh N–S so với E–W. Sửa có hiệu lực ngay ở Cố định / Tối ưu; Thích ứng & Điều phối tự chọn hướng.',
   'tip.ix.offset':
     'Lệch đồng hồ chủ so với chu kỳ — thứ làm nên sóng xanh giữa các nút liền kề.',
+  'tip.ix.durations':
+    'Thời lượng pha theo kế hoạch cố định: xanh N–S → vàng → all-red → xanh E–W → vàng → all-red. Công thức giống engine (lost time, split).',
 
   'tip.zoom.in':
     'Phóng to bản đồ từ tâm (phím +). Cuộn chuột cũng phóng về con trỏ.',
@@ -409,6 +420,15 @@ export const en: { [K in MsgKey]: string } = {
     'Split is the N–S share of effective green. Offset is the master-clock shift used for green waves. Edits apply immediately in Fixed / Optimized modes.',
   'ix.empty':
     'Click a glowing signalized junction to inspect queues, retune cycle / split / offset, and watch the phase countdown.',
+  'ix.durations': 'Phase durations',
+  'ix.gNS': 'Green N–S',
+  'ix.gEW': 'Green E–W',
+  'ix.yellowSec': 'Yellow',
+  'ix.allRedSec': 'All-red',
+  'ix.durations.hintFixed':
+    'From current cycle & split (Fixed / Optimized).',
+  'ix.durations.hintLive':
+    'Adaptive / Coord: live green is 8–52s from queues; table above is the plan if you switch to Fixed.',
 
   'net.title': 'Network',
   'net.blurb':
@@ -470,7 +490,7 @@ export const en: { [K in MsgKey]: string } = {
   'tut.s7.title': 'How to read the HUD',
   'tut.s7.body':
     '<b>Avg wait</b> is completed-trip delay, not instantaneous. <b>p95</b> is the miserable tail. <b>Throughput</b> is veh/h. <b>Queue load</b> is pressure, not a vehicle count. If wait looks worse after a mid-run mode switch, reset and recapture.',
-'tip.mode.fixed':
+  'tip.mode.fixed':
     'Naive fixed-time (~50/50 splits), no coordination. Use as the A/B baseline for the afternoon bridge jam. Edit cycle/split/offset in the inspector.',
   'tip.mode.adaptive':
     'Each light picks N–S vs E–W from queue pressure (advanced max-pressure, minus 0.6× downstream queue). No Optimize needed.',
@@ -541,6 +561,8 @@ export const en: { [K in MsgKey]: string } = {
     'N–S share of effective green vs E–W. Edits apply immediately in Fixed / Optimized; Adaptive & Coord pick approaches themselves.',
   'tip.ix.offset':
     'Master-clock shift within the cycle — what builds a green wave across adjacent lights.',
+  'tip.ix.durations':
+    'Fixed-plan phase lengths: green N–S → yellow → all-red → green E–W → yellow → all-red. Same engine formulas (lost time, split).',
 
   'tip.zoom.in':
     'Zoom in from map center (+ key). Scroll also zooms toward the cursor.',
