@@ -1,242 +1,184 @@
-# GreenWave algorithms
+# How GreenWave’s traffic lights decide (simple guide)
 
-How signal control works in GreenWave today. Numbers and formulas below are taken from the live code (`src/sim/engine.ts`, `src/optimizer/coordPolicy.ts`, `src/optimizer/cmaes.ts`), not from a paper abstract.
-
-**Pocket:** 20 OSM signalized junctions around Lê Duẩn × Lê Lợi feeding Cầu Sông Hàn. Two-phase lights only (N–S vs E–W). Mixed cars + motorbikes. Client-side TypeScript sim.
-
-**Modes in the UI**
-
-| UI | Internal `ControlMode` | What it is |
-|----|------------------------|------------|
-| Cố định / Fixed | `fixed` | Clocked plan: cycle, split, offset |
-| Thích ứng / Adaptive | `adaptive` | Per-junction advanced max-pressure |
-| Điều phối / Coord | `coord` | Graph-smoothed advanced max-pressure |
-| Tối ưu / Optimized | `optimized` | Same runner as Fixed, but timing comes from CMA-ES |
-
-`Optimized` is **not** a live RL controller. “Tối ưu ngay” / “Tối ưu nút này” run CMA-ES offline, then apply a timing plan and switch to `optimized` (fixed-time playback of that plan).
+GreenWave is a **demo** of four ways to run the 20 lights around Lê Duẩn × Lê Lợi and Cầu Sông Hàn. This page explains them in everyday language, then points to papers if you want the deep version.
 
 ---
 
-## Shared plant: queues, pressure, intergreen
+## The shared idea: two colors only
 
-### Queue measurement (`updateQueues`)
+Every signalized junction in GreenWave is a simple **two-phase** light:
 
-On each incoming link, vehicles in the last ~85 m before the stop bar (`STOP_PAD + 85`) with speed \(v < 4.5\) m/s count as queued. Weights: car `1.35`, moto `0.7`. Those weights roll up into approach queues \(q_N, q_E, q_S, q_W\) on the signal.
+- **N–S green** — north–south traffic goes  
+- **E–W green** — east–west traffic goes  
 
-Moving vehicles on the link contribute to a “flow” term used only inside pressure (not shown as queue).
+Between those greens we always insert:
 
-### Advanced max-pressure (shared by Adaptive and Coord)
+- **Yellow** — 3 seconds (cars clear the box)  
+- **All-red** — 1 second (everyone stopped briefly)  
 
-For each approach \(a \in \{N,E,S,W\}\):
+So a full story is always: green → yellow → all-red → other green → yellow → all-red → repeat.
 
-\[
-\begin{aligned}
-\text{demand}_a &= \sum_{\text{inlinks to } a} \big(q_{\text{link}} + 0.22 \cdot \text{flow}_{\text{link}}\big) \\
-p_a &= \text{demand}_a - 0.6 \cdot q_{\text{downstream}}
-\end{aligned}
-\]
-
-- Downstream link = prefer straight-through outgoing opposite the approach, else other outgoing.
-- \(\gamma = 0.6\) discounts spilling into a jammed next link (Varaiya-style max-pressure idea, simplified two-phase).
-- Phase pressures: \(p_{NS} = p_N + p_S\), \(p_{EW} = p_E + p_W\).
-
-### Intergreen (all live modes)
-
-When a controller decides to leave green:
-
-1. **Yellow** `YELLOW = 3.0` s  
-2. **All-red** `ALLRED = 1.0` s  
-3. Flip phase (0 ↔ 1) and reset green timer  
-
-Adaptive/Coord also enforce **min green** `MIN_GREEN = 8` s and **max green** `MAX_GREEN = 52` s on the live green timer.
+Cars and motorbikes wait in a short zone just before the stop line. We count that waiting pile as a **queue**. Heavier cars count a bit more than motorbikes.
 
 ---
 
-## 1. Fixed (`fixed`) — and Optimized playback
+## 1. Fixed (Cố định) — “run the clock”
 
-### Timing genes per junction
+**In one sentence:** each light follows a pre-written schedule, like a music metronome. It does **not** look at how many cars are waiting.
 
-- `cycle` — seconds (UI ~48–140; CMA search 64–110)  
-- `splitNS` — fraction of *usable* green given to N–S (rest to E–W)  
-- `offset` — seconds shift of the local clock vs global sim time \(t\)  
+You set three knobs per light (or one shared cycle for the network):
 
-Optional `plan.cycles[i]` lets each junction keep its own cycle after single-junction CMA-ES; otherwise everyone shares `plan.cycle`.
+| Knob | Plain meaning |
+|------|----------------|
+| **Cycle** | How long one full “song” lasts (e.g. ~90 seconds) |
+| **Split N–S** | How much of the usable green goes north–south (the rest goes east–west) |
+| **Offset** | How much this light’s clock is shifted vs the others |
 
-### Usable green inside a cycle
+**Offset** is how you build a **green wave**: if the light downstream turns green just as a platoon arrives, people roll through with fewer stops.
 
-\[
-\begin{aligned}
-\text{lost} &= \min(0.45 \cdot \text{cycle},\; 2\cdot(\text{YELLOW}+\text{ALLRED})) \\
-g &= \max(12,\; \text{cycle} - \text{lost}) \\
-g_{NS} &= \max(6,\; g \cdot \text{splitNS}) \\
-g_{EW} &= \max(6,\; g - g_{NS})
-\end{aligned}
-\]
+**Optimized mode** in the UI is still this Fixed clock — but the knobs were filled in by the search button (CMA-ES), not by hand.
 
-Lost time reserves room for two yellow + two all-red clearances per cycle.
+**Good for:** fair A/B baselines, teaching cycle / split / offset.  
+**Bad for:** sudden jams (the clock keeps playing even if one approach is empty).
 
-### Phase timeline (local clock)
+**Read more**
 
-\[
-\tau = (t + \text{offset}) \bmod \text{cycle}
-\]
-
-Slots in order:
-
-| Slot | Interval | Lamp |
-|------|----------|------|
-| 0 | \([0, g_{NS})\) | N–S green |
-| 1 | yellow | N–S yellow |
-| 2 | all-red | all red |
-| 3 | \(g_{EW}\) | E–W green |
-| 4 | yellow | E–W yellow |
-| 5 | all-red → end of cycle | all red |
-
-Inspector “Thời lượng pha” shows \(g_{NS}\), yellow, all-red, \(g_{EW}\), yellow, all-red from these formulas.
-
-### Default / seed plans
-
-- **Naive / default Fixed:** shared cycle ~96 s, splits ~0.5, offsets 0 (poor on afternoon bridge dump — intentional baseline).  
-- **`greenWaveSeed(cycle)`:** offsets ≈ \(x / 13.5\) (meters along corridor → time at ~13.5 m/s), splits biased by how many N–S vs E–W in-links. Used as CMA-ES start, not as a separate UI mode.
-
-**What Fixed does *not* do:** read queues. It is open-loop.
+- [FHWA Signal Timing Manual — basics of cycle, split, and offset](https://ops.fhwa.dot.gov/publications/fhwahop08024/chapter4.htm)  
+- [Green wave (Wikipedia)](https://en.wikipedia.org/wiki/Green_wave) — arterial coordination idea  
 
 ---
 
-## 2. Adaptive (`adaptive`) — advanced max-pressure
+## 2. Adaptive (Thích ứng) — “serve the longer line”
 
-Each junction decides alone every sim step (after intergreen is finished):
+**In one sentence:** each light watches **its own** queues and gives green to the busier direction, with a few safety rules.
 
-1. Update queues → pressures \(p_{NS}, p_{EW}\).  
-2. `serving` = pressure of current phase; `other` = pressure of the other phase.  
-3. Switch to yellow if:
+Roughly:
 
-\[
-\big(\text{elapsed} \ge 8 \;\wedge\; \text{other} > \text{serving} + 2.2\big)
-\;\vee\;
-\text{elapsed} \ge 52
-\]
+1. Measure waiting cars on each approach.  
+2. Also peek a little at the road **leaving** the junction — if the next segment is already packed, don’t feed it as hard.  
+3. If the **other** direction has clearly more “pressure” than the one you’re serving, and you’ve already given at least **8 seconds** of green → switch (yellow, then all-red, then the other green).  
+4. Never hold green longer than **52 seconds**.
 
-and also (`other > 0.4` **or** max-green hit) so we do not chatter on empty opposing approaches.
+That “pressure” idea is a simplified **max-pressure** controller: reward serving a long queue, but subtract a penalty if you’re pushing into a jammed downstream link.
 
-**Properties**
+**Analogy:** a fair bartender who pours for the longer queue, but won’t keep pouring into a glass that’s already overflowing.
 
-- Fully reactive; no offsets, no shared cycle while Adaptive is on.  
-- Cycle/split/offset sliders still exist (they define the Fixed plan underneath) but **do not drive lamps** until you leave Adaptive.  
-- No coordination: a junction cannot “see” neighbors except via the \(\gamma\) downstream queue on its own out-link.
+**Good for:** reacting to the afternoon dump onto the bridge without hand-tuning offsets.  
+**Bad for:** perfect green waves (neighbors don’t plan together — they only feel each other through jammed links).
 
----
+**Read more**
 
-## 3. Coord (`coord`) — graph-smoothed advanced max-pressure
+- Varaiya, P. (2013). *Max pressure control of a network of signalized intersections*. Transportation Research Part C.  
+  - DOI: [10.1016/j.trc.2013.08.014](https://doi.org/10.1016/j.trc.2013.08.014)  
+  - Open overview / related chapter listing: [Complex Networks and Dynamic Systems chapter](https://link.springer.com/chapter/10.1007/978-1-4614-6243-9_2)  
+- Short HEARTs abstract on practical MP and “self-organizing” offsets: [Adaptive Max Pressure Control (PDF)](https://transp-or.epfl.ch/heart/2014/abstracts/285.pdf)  
 
-Same intergreen, min/max green, and pressure field as Adaptive. The **switch vote** is different.
-
-### Neighbor graph
-
-`neighborIndices(net, i)` walks the road graph from signal \(i\), skipping unsignalized nodes, collecting up to 8 nearby signal ids.
-
-### Attention over neighbor pressures (`graphMpVotes`, \(\beta = 0.35\))
-
-For junction \(i\) with neighbors \(j\):
-
-\[
-\text{score}_{ij} = p_{NS}(i)\,p_{NS}(j) + p_{EW}(i)\,p_{EW}(j)
-\]
-
-Softmax with temperature scale `0.08` → attention weights \(\alpha_{ij}\). Aggregates:
-
-\[
-a_{NS} = \sum_j \alpha_{ij}\, p_{NS}(j),\quad
-a_{EW} = \sum_j \alpha_{ij}\, p_{EW}(j)
-\]
-
-Smoothed pressures:
-
-\[
-\begin{aligned}
-s_{NS} &= (1-\beta)\,p_{NS}(i) + \beta\, a_{NS} \\
-s_{EW} &= (1-\beta)\,p_{EW}(i) + \beta\, a_{EW}
-\end{aligned}
-\]
-
-Vote **switch** if `elapsed ≥ MIN_GREEN` and opposing smoothed pressure beats serving by `+2.2` (same margin as Adaptive). Max-green still forces a switch.
-
-### Note on “graph-RL” / Q-attention
-
-`coordPolicy.ts` still contains a Q-attention network (`kind: 'qattn'`) and training helpers. **Live Coord does not use trained Q weights** unless they are marked trained and dimension-matched. On the current 20-light pocket, `coordVotes` falls through to `graphMpVotes`. The UI correctly describes Coord as graph-smoothed max-pressure, not a shipped MARL policy.
+GreenWave’s version is **demo-grade**: two phases only, simple queue estimates, fixed γ = 0.6 downstream discount — not a full city deployment.
 
 ---
 
-## 4. CMA-ES Optimize (`src/optimizer/cmaes.ts`)
+## 3. Coord (Điều phối) — “Adaptive, but ask the neighbors”
 
-Offline search. Each candidate is evaluated in a **headless** `TrafficSim` copy: apply plan → `fixed` mode → simulate 60 s at \(\Delta t = 0.25\) s → read metrics.
+**In one sentence:** same pressure idea as Adaptive, but each light also **listens to nearby lights** before it decides to switch.
 
-### Fitness (network-wide)
+How the “listening” works (plainly):
 
-\[
-\text{fitness} = \frac{\text{throughput}}{8 + \text{avgWait}} - 0.15\cdot\text{stops} - 0.02\cdot\text{p95Wait}
-\]
+1. Find up to 8 neighboring signals on the map graph.  
+2. See which neighbors are stressed in the **same** directions as you (N–S with N–S, E–W with E–W).  
+3. Blend **65% your own pressure** with **35% a weighted average of those neighbors** (β = 0.35).  
+4. Switch when the other blended pressure clearly beats the one you’re serving (same +2.2 margin and 8–52 s green limits as Adaptive).
 
-Higher is better. Junction-scoped search uses the **same** network fitness (one light is tuned for corridor effect).
+**Analogy:** Adaptive is one shopkeeper watching their own door. Coord is shopkeepers who also glance at the next doors so they don’t all flip at random.
 
-### Network scope (“Tối ưu ngay”)
+**Important:** the UI used to flirt with “graph RL.” What ships today is this **graph-smoothed max-pressure**, not a trained neural policy on Da Nang data. There is leftover Q-attention code in the repo, but live Coord falls back to the smoothed rule above.
 
-- Genes: \(1 + 20\times 2 = 41\)  
-  - 1 shared cycle ∈ [64, 110]  
-  - 20 × `splitNS` ∈ [0.24, 0.76]  
-  - 20 × `offset` / cycle ∈ [0, 1]  
-- Population \(\lambda = 12\), \(\mu = 6\), max generations `5`  
-- Initial \(\sigma \approx 0.16\), CMA covariance adaptation (Jacobi eigendecomposition of \(C\))  
-- Start mean from current plan / green-wave seed  
+**Good for:** slightly calmer corridor behavior than pure Adaptive.  
+**Bad for:** claiming state-of-the-art MARL (CoLight, etc.) — we didn’t ship that.
 
-Result: one coordinated Fixed plan → mode `optimized`.
+**Read more**
 
-### Junction scope (“Tối ưu nút này”)
-
-Requires a selected signalized junction `sigId`.
-
-- Genes: **3** — that light’s cycle, splitNS, offset  
-- Clones the **live** plan; only `sigId` entries change (`plan.cycles[sigId]`, `splitNS[sigId]`, `offset[sigId]`)  
-- \(\lambda = 10\), maxGen `6`, slightly larger initial \(\sigma\)  
-- Other 19 junctions stay byte-identical to the base plan  
-
-### What CMA-ES is / is not
-
-- **Is:** derivative-free continuous optimizer over timing parameters; good demo of “search a green wave.”  
-- **Is not:** online adaptive control, nor a guarantee of global optimality (short eval horizon, small budget, two-phase abstraction).
+- Same Varaiya max-pressure papers as above (Coord still starts from MP).  
+- For true graph multi-agent RL on signals (what we *don’t* run live):  
+  Wei et al., *Colight: Learning Network-level Cooperation for Traffic Signal Control* — [arXiv:1905.05717](https://arxiv.org/abs/1905.05717)  
 
 ---
 
-## How to compare fairly in the app
+## 4. Optimize (CMA-ES) — “try many schedules, keep the best”
 
-1. Demand **Chiều / Afternoon**, Fixed mode.  
-2. **Ghi mốc / Capture baseline** after the jam develops.  
-3. Switch Adaptive or Coord, or run network / single-junction Optimize.  
-4. Read A/B deltas (wait, throughput, stops, p95) vs the captured baseline.  
+**In one sentence:** the computer proposes many Fixed schedules, **replays** a short simulation of each, scores them, and keeps improving — then you drive with the winning Fixed plan.
 
-Same seed + same demand ⇒ reproducible headless evals inside CMA-ES; live UI noise still varies with discrete vehicle IDs.
+It does **not** steer lights second-by-second while you watch. It **searches offline**, then loads the result into Optimized / Fixed playback.
+
+### Score (what “best” means here)
+
+Prefer high **throughput**, punish long **average wait**, bad **p95 wait**, and many **stops**. Exactly:
+
+`throughput / (8 + avgWait) − 0.15×stops − 0.02×p95Wait`
+
+Change those weights and the “winner” can change.
+
+### Two buttons
+
+| Button | What it searches | What stays fixed |
+|--------|------------------|------------------|
+| **Tối ưu ngay** (network) | One shared cycle + split & offset for **all 20** lights (41 numbers) | — |
+| **Tối ưu nút này** (one junction) | Cycle, split, offset for **the light you clicked** (3 numbers) | The other 19 lights’ plan |
+
+Each try: clone the sim → run ~60 seconds of Fixed traffic → read the score. CMA-ES is the search engine that decides the next tries (it learns which directions in “knob space” were promising).
+
+**Analogy:** a coach who isn’t watching the live game, but runs many quick scrimmages with different playbooks and picks the playbook with the best score.
+
+**Good for:** discovering a decent green-wave-ish Fixed plan for this pocket.  
+**Bad for:** guaranteeing the global optimum (short replay, small search budget, toy car-following).
+
+**Read more**
+
+- Hansen, N. *The CMA Evolution Strategy: A Tutorial* — [arXiv:1604.00772](https://arxiv.org/pdf/1604.00772) (canonical CMA-ES explanation)  
+- CMA-ES for arterial timing (related idea, not our code): ES-Band — [ACM short paper](https://doi.org/10.1145/3356470.3365532)  
+- Evolution strategies as an alternative to RL: Salimans et al. — [arXiv:1703.03864](https://arxiv.org/abs/1703.03864)  
 
 ---
 
-## Limits (honest)
+## Quick chooser
 
-- Two phases only (no protected lefts, no pedestrian phases).  
-- IDM-lite car-following; not SUMO/VISSIM fidelity.  
-- Pressure uses a short stop-bar queue, not full link density.  
-- Coord attention is heuristic (\(\beta=0.35\)), not calibrated on Da Nang detector data.  
-- CMA-ES fitness is a hand-tuned scalar — change weights and the “best” plan moves.  
-- Demo-grade vs full max-pressure with saturation flows, or CoLight-style trained graph RL.
+| If you want… | Use… |
+|--------------|------|
+| A stable baseline to beat | **Fixed**, then Capture baseline |
+| Lights that react to queues | **Adaptive** |
+| Adaptive + a bit of neighbor awareness | **Coord** |
+| A searched Fixed “green wave” plan | **Optimize now** (network) |
+| Nudge only Lê Duẩn × Lê Lợi (etc.) | Click the light → **Optimize this junction** |
+
+Fair test: Afternoon demand → Fixed → Capture baseline → switch mode or Optimize → read the A/B cards.
 
 ---
 
-## Code map
+## What this is *not*
 
-| Piece | File |
+- Not a full Viet Nam traffic code / turn-pocket / pedestrian model  
+- Not SUMO or VISSIM accuracy  
+- Not calibrated on real Da Nang detector feeds  
+- Not published SOTA RL (see CoLight link above if that’s what you meant)
+
+---
+
+## References (all in one place)
+
+1. **Signal timing basics (cycle / split / offset)** — FHWA Signal Timing Manual, Ch. 4: https://ops.fhwa.dot.gov/publications/fhwahop08024/chapter4.htm  
+2. **Green wave (concept)** — https://en.wikipedia.org/wiki/Green_wave  
+3. **Max-pressure control** — Varaiya (2013), *Transportation Research Part C*: https://doi.org/10.1016/j.trc.2013.08.014  
+4. **Max-pressure practice / self-organizing offsets** — HEARTs abstract PDF: https://transp-or.epfl.ch/heart/2014/abstracts/285.pdf  
+5. **CMA-ES tutorial** — Hansen: https://arxiv.org/pdf/1604.00772  
+6. **CMA-ES for arterial green bands (related work)** — ES-Band: https://doi.org/10.1145/3356470.3365532  
+7. **Graph RL for signals (not what Coord runs today)** — CoLight: https://arxiv.org/abs/1905.05717  
+
+## Code (if you want the exact numbers)
+
+| Topic | File |
 |-------|------|
-| Fixed slots, Adaptive switch, queues/pressure | `src/sim/engine.ts` |
-| Constants YELLOW/ALLRED/MIN/MAX green | `src/sim/types.ts` |
-| Graph-smoothed MP + optional Q-attn | `src/optimizer/coordPolicy.ts` |
-| CMA-ES network + junction | `src/optimizer/cmaes.ts` |
-| Pocket topology | `src/sim/mapGraph.json`, `scripts/clipPocket.py` |
+| Fixed clock, Adaptive switch, queues/pressure | `src/sim/engine.ts` |
+| Yellow / all-red / min–max green constants | `src/sim/types.ts` |
+| Coord neighbor smoothing | `src/optimizer/coordPolicy.ts` |
+| CMA-ES network + single junction | `src/optimizer/cmaes.ts` |
 
-*Generated for GreenWave · Lê Duẩn × Lê Lợi · Cầu Sông Hàn · 20 đèn.*
+*GreenWave · Lê Duẩn × Lê Lợi · Cầu Sông Hàn · 20 lights · demo, not a city ATC system.*
