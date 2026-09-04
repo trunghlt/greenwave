@@ -1,0 +1,24 @@
+{
+  "name": "greenwave",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "GreenWave — cinematic AI traffic-light timing lab on OpenStreetMap downtown Đà Nẵng (Hải Châu–Sơn Trà).",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "train:coord": "npx --yes tsx scripts/trainCoord.ts"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
+  }
+}

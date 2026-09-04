@@ -1,0 +1,860 @@
+{
+  "source": "OpenStreetMap © contributors",
+  "area": "Đà Nẵng · Lê Duẩn × Lê Lợi · Cầu Sông Hàn · 5 đèn",
+  "bbox": [
+    16.038,
+    16.08,
+    108.208,
+    108.252
+  ],
+  "worldW": 2081.39,
+  "worldH": 1401.45,
+  "riverX": 1397.77,
+  "river": [
+    [
+      1367.77,
+      -40
+    ],
+    [
+      1389.77,
+      490.51
+    ],
+    [
+      1407.77,
+      868.9
+    ],
+    [
+      1425.77,
+      1441.45
+    ]
+  ],
+  "nodes": [
+    {
+      "x": 345.35,
+      "y": 706.92,
+      "name": "Lê Duẩn × Ngô Gia Tự",
+      "district": "Hải Châu",
+      "arterial": true,
+      "signalized": true,
+      "sigId": 0,
+      "rank": 4,
+      "streets": [
+        "Lê Duẩn",
+        "Ngô Gia Tự"
+      ]
+    },
+    {
+      "x": 150.0,
+      "y": 748.68,
+      "name": "Chi Lăng × Lê Duẩn",
+      "district": "Hải Châu",
+      "arterial": true,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 3,
+      "streets": [
+        "Chi Lăng",
+        "Lê Duẩn"
+      ]
+    },
+    {
+      "x": 528.55,
+      "y": 682.59,
+      "name": "Lê Duẩn",
+      "district": "Hải Châu",
+      "arterial": true,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 3,
+      "streets": [
+        "Lê Duẩn"
+      ]
+    },
+    {
+      "x": 712.94,
+      "y": 657.29,
+      "name": "Lê Duẩn × Lê Lợi",
+      "district": "Hải Châu",
+      "arterial": true,
+      "signalized": true,
+      "sigId": 1,
+      "rank": 4,
+      "streets": [
+        "Lê Duẩn",
+        "Lê Lợi"
+      ]
+    },
+    {
+      "x": 963.65,
+      "y": 632.8,
+      "name": "Lê Duẩn",
+      "district": "Hải Châu",
+      "arterial": true,
+      "signalized": true,
+      "sigId": 2,
+      "rank": 4,
+      "streets": [
+        "Lê Duẩn"
+      ]
+    },
+    {
+      "x": 1681.98,
+      "y": 532.97,
+      "name": "Cầu Sông Hàn Tây",
+      "district": "Hải Châu",
+      "arterial": true,
+      "signalized": true,
+      "sigId": 3,
+      "rank": 4,
+      "streets": [
+        "Cầu Sông Hàn"
+      ]
+    },
+    {
+      "x": 1817.36,
+      "y": 515.53,
+      "name": "Cầu Sông Hàn Đông",
+      "district": "Sơn Trà",
+      "arterial": true,
+      "signalized": true,
+      "sigId": 4,
+      "rank": 4,
+      "streets": [
+        "Cầu Sông Hàn",
+        "Ngô Quyền",
+        "Phạm Văn Đồng"
+      ]
+    },
+    {
+      "x": 772.17,
+      "y": 506.56,
+      "name": "Hải Phòng × Nguyễn Chí Thanh",
+      "district": "Hải Châu",
+      "arterial": false,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 1,
+      "streets": [
+        "Hải Phòng",
+        "Nguyễn Chí Thanh"
+      ]
+    },
+    {
+      "x": 709.89,
+      "y": 958.77,
+      "name": "Hùng Vương × Phan Châu Trinh",
+      "district": "Hải Châu",
+      "arterial": false,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 1,
+      "streets": [
+        "Hùng Vương",
+        "Phan Châu Trinh"
+      ]
+    },
+    {
+      "x": 418.12,
+      "y": 1031.45,
+      "name": "Hùng Vương × Ngô Gia Tự",
+      "district": "Hải Châu",
+      "arterial": false,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 1,
+      "streets": [
+        "Hùng Vương",
+        "Ngô Gia Tự"
+      ]
+    },
+    {
+      "x": 1799.96,
+      "y": 370.0,
+      "name": "Ngô Quyền",
+      "district": "Sơn Trà",
+      "arterial": true,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 4,
+      "streets": [
+        "Ngô Quyền"
+      ]
+    },
+    {
+      "x": 1848.2,
+      "y": 644.22,
+      "name": "Ngô Quyền",
+      "district": "Sơn Trà",
+      "arterial": true,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 4,
+      "streets": [
+        "Ngô Quyền"
+      ]
+    },
+    {
+      "x": 1971.39,
+      "y": 558.83,
+      "name": "Phạm Văn Đồng",
+      "district": "Sơn Trà",
+      "arterial": true,
+      "signalized": false,
+      "sigId": -1,
+      "rank": 2,
+      "streets": [
+        "Phạm Văn Đồng"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": 5,
+      "to": 6,
+      "poly": [
+        [
+          1681.98,
+          532.97
+        ],
+        [
+          1791.54,
+          530.22
+        ],
+        [
+          1817.36,
+          515.53
+        ]
+      ],
+      "name": "Cầu Sông Hàn",
+      "arterial": true,
+      "bridge": true,
+      "speedLimit": 13.5,
+      "length": 139.3,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 9,
+      "to": 0,
+      "poly": [
+        [
+          418.12,
+          1031.45
+        ],
+        [
+          345.35,
+          706.92
+        ]
+      ],
+      "name": "Ngô Gia Tự",
+      "arterial": false,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 332.59,
+      "spawn": true,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 0,
+      "to": 9,
+      "poly": [
+        [
+          345.35,
+          706.92
+        ],
+        [
+          418.12,
+          1031.45
+        ]
+      ],
+      "name": "Ngô Gia Tự",
+      "arterial": false,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 332.59,
+      "spawn": false,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 9,
+      "to": 8,
+      "poly": [
+        [
+          418.12,
+          1031.45
+        ],
+        [
+          709.89,
+          958.77
+        ]
+      ],
+      "name": "Hùng Vương",
+      "arterial": false,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 300.69,
+      "spawn": true,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 8,
+      "to": 9,
+      "poly": [
+        [
+          709.89,
+          958.77
+        ],
+        [
+          418.12,
+          1031.45
+        ]
+      ],
+      "name": "Hùng Vương",
+      "arterial": false,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 300.69,
+      "spawn": true,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 2,
+      "to": 0,
+      "poly": [
+        [
+          528.55,
+          682.59
+        ],
+        [
+          345.35,
+          706.92
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 184.81,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 0,
+      "to": 2,
+      "poly": [
+        [
+          345.35,
+          706.92
+        ],
+        [
+          528.55,
+          682.59
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 184.81,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 0,
+      "to": 1,
+      "poly": [
+        [
+          345.35,
+          706.92
+        ],
+        [
+          150.0,
+          748.68
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 199.76,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 1,
+      "to": 0,
+      "poly": [
+        [
+          150.0,
+          748.68
+        ],
+        [
+          345.35,
+          706.92
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 199.76,
+      "spawn": true,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 6,
+      "to": 10,
+      "poly": [
+        [
+          1817.36,
+          515.53
+        ],
+        [
+          1823.5,
+          487.76
+        ],
+        [
+          1799.96,
+          370.0
+        ]
+      ],
+      "name": "Ngô Quyền",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 12.5,
+      "length": 148.53,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 3,
+      "to": 2,
+      "poly": [
+        [
+          712.94,
+          657.29
+        ],
+        [
+          528.55,
+          682.59
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 186.12,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "poly": [
+        [
+          528.55,
+          682.59
+        ],
+        [
+          712.94,
+          657.29
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 186.12,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 3,
+      "to": 7,
+      "poly": [
+        [
+          712.94,
+          657.29
+        ],
+        [
+          791.3,
+          652.61
+        ],
+        [
+          772.17,
+          506.56
+        ]
+      ],
+      "name": "Lê Lợi",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 225.8,
+      "spawn": false,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 3,
+      "to": 4,
+      "poly": [
+        [
+          712.94,
+          657.29
+        ],
+        [
+          838.3,
+          645.05
+        ],
+        [
+          963.65,
+          632.8
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 251.9,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 4,
+      "to": 3,
+      "poly": [
+        [
+          963.65,
+          632.8
+        ],
+        [
+          838.3,
+          645.05
+        ],
+        [
+          712.94,
+          657.29
+        ]
+      ],
+      "name": "Lê Duẩn",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 13.5,
+      "length": 251.9,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "poly": [
+        [
+          963.65,
+          632.8
+        ],
+        [
+          1322.82,
+          582.88
+        ],
+        [
+          1681.98,
+          532.97
+        ]
+      ],
+      "name": "Cầu Sông Hàn",
+      "arterial": true,
+      "bridge": true,
+      "speedLimit": 13.5,
+      "length": 725.23,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 5,
+      "to": 4,
+      "poly": [
+        [
+          1681.98,
+          532.97
+        ],
+        [
+          1322.82,
+          582.88
+        ],
+        [
+          963.65,
+          632.8
+        ]
+      ],
+      "name": "Cầu Sông Hàn",
+      "arterial": true,
+      "bridge": true,
+      "speedLimit": 13.5,
+      "length": 725.23,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 6,
+      "to": 5,
+      "poly": [
+        [
+          1817.36,
+          515.53
+        ],
+        [
+          1749.67,
+          524.25
+        ],
+        [
+          1681.98,
+          532.97
+        ]
+      ],
+      "name": "Cầu Sông Hàn",
+      "arterial": true,
+      "bridge": true,
+      "speedLimit": 13.5,
+      "length": 136.5,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 7,
+      "to": 3,
+      "poly": [
+        [
+          772.17,
+          506.56
+        ],
+        [
+          742.56,
+          581.93
+        ],
+        [
+          712.94,
+          657.29
+        ]
+      ],
+      "name": "Lê Lợi",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 161.95,
+      "spawn": true,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 3,
+      "to": 8,
+      "poly": [
+        [
+          712.94,
+          657.29
+        ],
+        [
+          711.41,
+          808.03
+        ],
+        [
+          709.89,
+          958.77
+        ]
+      ],
+      "name": "Lê Lợi",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 301.5,
+      "spawn": false,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 8,
+      "to": 3,
+      "poly": [
+        [
+          709.89,
+          958.77
+        ],
+        [
+          711.41,
+          808.03
+        ],
+        [
+          712.94,
+          657.29
+        ]
+      ],
+      "name": "Lê Lợi",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 10.5,
+      "length": 301.5,
+      "spawn": true,
+      "lanes": 1,
+      "widthM": 3.5
+    },
+    {
+      "from": 6,
+      "to": 11,
+      "poly": [
+        [
+          1817.36,
+          515.53
+        ],
+        [
+          1832.78,
+          579.88
+        ],
+        [
+          1848.2,
+          644.22
+        ]
+      ],
+      "name": "Ngô Quyền",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 12.5,
+      "length": 132.33,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 11,
+      "to": 6,
+      "poly": [
+        [
+          1848.2,
+          644.22
+        ],
+        [
+          1832.78,
+          579.88
+        ],
+        [
+          1817.36,
+          515.53
+        ]
+      ],
+      "name": "Ngô Quyền",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 12.5,
+      "length": 132.33,
+      "spawn": true,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 10,
+      "to": 6,
+      "poly": [
+        [
+          1799.96,
+          370.0
+        ],
+        [
+          1808.66,
+          442.76
+        ],
+        [
+          1817.36,
+          515.53
+        ]
+      ],
+      "name": "Ngô Quyền",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 12.5,
+      "length": 146.57,
+      "spawn": true,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 6,
+      "to": 12,
+      "poly": [
+        [
+          1817.36,
+          515.53
+        ],
+        [
+          1894.375,
+          537.1800000000001
+        ],
+        [
+          1971.39,
+          558.83
+        ]
+      ],
+      "name": "Phạm Văn Đồng",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 12.5,
+      "length": 160.0,
+      "spawn": false,
+      "lanes": 2,
+      "widthM": 7.0
+    },
+    {
+      "from": 12,
+      "to": 6,
+      "poly": [
+        [
+          1971.39,
+          558.83
+        ],
+        [
+          1894.375,
+          537.1800000000001
+        ],
+        [
+          1817.36,
+          515.53
+        ]
+      ],
+      "name": "Phạm Văn Đồng",
+      "arterial": true,
+      "bridge": false,
+      "speedLimit": 12.5,
+      "length": 160.0,
+      "spawn": true,
+      "lanes": 2,
+      "widthM": 7.0
+    }
+  ],
+  "signalCount": 5,
+  "simplifications": {
+    "pocket": "Lê Duẩn × Lê Lợi feeding Cầu Sông Hàn",
+    "signalsCapped": 5,
+    "notes": [
+      "Clipped from Hải Châu–Sơn Trà arterial graph to a ~1.5–2 km pocket",
+      "Five signalized junctions: Ngô Gia Tự, Lê Duẩn × Lê Lợi, Lê Duẩn, Cầu Sông Hàn Tây, Cầu Sông Hàn Đông",
+      "Cầu Sông Hàn west landing promoted to signalized",
+      "lanes/widthM from OSM tags where present, else street heuristics",
+      "Lê Duẩn + bridge 2 lanes @ 13.5 m/s; Lê Lợi / Ngô Gia Tự 1 lane @ 10.5 m/s; Ngô Quyền / Phạm Văn Đồng 2 lanes"
+    ]
+  }
+}
