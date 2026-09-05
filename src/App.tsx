@@ -314,6 +314,7 @@ export function App() {
 
   const startOptimize = (opts?: { auto?: boolean; reason?: string }) => {
     if (optRunningRef.current) return;
+    optRunningRef.current = true;
     if (!baseline) captureBaseline();
     const opt = new CMAESOptimizer(scenario, custom, seed, sim.plan.cycle, { scope: 'network' });
     optRef.current = opt;
