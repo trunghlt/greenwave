@@ -84,6 +84,13 @@ export const vi = {
   'opt.done': 'CMA-ES xong · gen {gen}',
   'opt.applied': 'Đã áp kế hoạch · chờ {wait}s · {thr} xe/h',
   'opt.best': 'Kế hoạch tốt nhất · chờ {wait}s · {thr} xe/h · cycle {cycle}s',
+  'opt.autoJam': 'Tự tối ưu khi ùn',
+  'opt.autoJam.hint':
+    'Khi chờ TB hoặc tải hàng chờ cao liên tục, chạy tối ưu mạng một lần rồi nghỉ (cooldown).',
+  'opt.auto.jam': 'Auto: phát hiện ùn — đang tìm…',
+  'opt.auto.last': 'Lần auto: {reason}',
+  'opt.auto.cooldown': 'Cooldown còn {s}s sim',
+  'opt.auto.idle': 'Auto sẵn sàng',
 
   'ab.title': 'A / B so với mốc',
   'ab.wait': 'Chờ',
@@ -241,6 +248,8 @@ export const vi = {
     'CMA-ES chỉ cycle, split, offset của nút đang chọn (3 gene). Đèn khác giữ nguyên. Fitness vẫn theo chờ/lưu lượng cả mạng.',
   'tip.opt.status':
     'Tiến trình CMA-ES: mẫu / thế hệ, hoặc kết quả đã áp (chờ TB, lưu lượng).',
+  'tip.opt.autoJam':
+    'Bật để CMA-ES mạng tự chạy khi chờ TB ≥ 90s hoặc hàng chờ ≥ 400 trong ~10s sim liên tiếp. Cooldown 180s sim sau mỗi lần chạy.',
 
   'tip.chip.avgWait':
     'Chờ trung bình của chuyến đã về đích (giây). Chưa ổn định khi còn ít chuyến xong.',
@@ -370,6 +379,13 @@ export const en: { [K in MsgKey]: string } = {
   'opt.done': 'CMA-ES done · gen {gen}',
   'opt.applied': 'Applied plan · wait {wait}s · {thr} veh/h',
   'opt.best': 'Best plan · wait {wait}s · {thr} veh/h · cycle {cycle}s',
+  'opt.autoJam': 'Auto-optimize on jam',
+  'opt.autoJam.hint':
+    'When avg wait or queue load stays high, run network Optimize once, then cooldown.',
+  'opt.auto.jam': 'Auto: jam detected — searching…',
+  'opt.auto.last': 'Last auto: {reason}',
+  'opt.auto.cooldown': 'Cooldown {s}s sim left',
+  'opt.auto.idle': 'Auto ready',
 
   'ab.title': 'A / B vs baseline',
   'ab.wait': 'Wait',
@@ -527,6 +543,8 @@ export const en: { [K in MsgKey]: string } = {
     'CMA-ES over this light’s cycle, split, and offset only. Other lights keep their plan. Fitness is still network-wide wait/throughput.',
   'tip.opt.status':
     'CMA-ES progress: samples / generations, or the applied result (avg wait, throughput).',
+  'tip.opt.autoJam':
+    'When on, network CMA-ES auto-runs if avg wait ≥ 90s or queue load ≥ 400 for ~10 consecutive sim-seconds. 180s sim cooldown after each run.',
 
   'tip.chip.avgWait':
     'Mean wait of completed trips (seconds). Unstable until enough trips finish.',
