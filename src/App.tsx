@@ -18,10 +18,32 @@ const DT = 1 / 20;
 
 /** Auto network CMA-ES when jam persists (sim-clock). */
 const AUTO_OPT_STORAGE_KEY = 'greenwave.autoOptJam';
-const AUTO_OPT_WAIT_THRESH = 90; // metrics.avgWait (seconds)
-const AUTO_OPT_QUEUE_THRESH = 400; // metrics.queued (pressure)
-const AUTO_OPT_HOLD_S = 10; // consecutive sim-seconds of jam
-const AUTO_OPT_COOLDOWN_S = 180; // sim-seconds after start/finish
+const AUTO_OPT_OPTS_KEY = 'greenwave.autoOptJamOpts';
+
+type AutoOptCombine = 'or' | 'and';
+type AutoOptJamOpts = {
+  useWait: boolean;
+  waitThresh: number;
+  useQueue: boolean;
+  queueThresh: number;
+  holdS: number;
+  cooldownS: number;
+  combine: AutoOptCombine;
+};
+
+const AUTO_OPT_OPTS_DEFAULT: AutoOptJamOpts = {
+  useWait: true,
+  waitThresh: 90,
+  useQueue: true,
+  queueThresh: 400,
+  holdS: 10,
+  cooldownS: 180,
+  combine: 'or',
+};
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, n));
+}
 
 function loadAutoOptJam(): boolean {
   try {
@@ -34,6 +56,40 @@ function loadAutoOptJam(): boolean {
 function saveAutoOptJam(on: boolean) {
   try {
     localStorage.setItem(AUTO_OPT_STORAGE_KEY, on ? '1' : '0');
+  } catch {
+    /* ignore */
+  }
+}
+
+function loadAutoOptJamOpts(): AutoOptJamOpts {
+  try {
+    const raw = localStorage.getItem(AUTO_OPT_OPTS_KEY);
+    if (!raw) return { ...AUTO_OPT_OPTS_DEFAULT };
+    const parsed = JSON.parse(raw) as Partial<AutoOptJamOpts>;
+    const combine: AutoOptCombine = parsed.combine === 'and' ? 'and' : 'or';
+    let useWait = parsed.useWait !== false;
+    let useQueue = parsed.useQueue !== false;
+    if (!useWait && !useQueue) {
+      useWait = true;
+      useQueue = true;
+    }
+    return {
+      useWait,
+      waitThresh: clamp(Number(parsed.waitThresh) || AUTO_OPT_OPTS_DEFAULT.waitThresh, 30, 180),
+      useQueue,
+      queueThresh: clamp(Number(parsed.queueThresh) || AUTO_OPT_OPTS_DEFAULT.queueThresh, 100, 800),
+      holdS: clamp(Number(parsed.holdS) || AUTO_OPT_OPTS_DEFAULT.holdS, 3, 60),
+      cooldownS: clamp(Number(parsed.cooldownS) || AUTO_OPT_OPTS_DEFAULT.cooldownS, 30, 600),
+      combine,
+    };
+  } catch {
+    return { ...AUTO_OPT_OPTS_DEFAULT };
+  }
+}
+
+function saveAutoOptJamOpts(opts: AutoOptJamOpts) {
+  try {
+    localStorage.setItem(AUTO_OPT_OPTS_KEY, JSON.stringify(opts));
   } catch {
     /* ignore */
   }
@@ -114,6 +170,7 @@ export function App() {
   const [optRunning, setOptRunning] = useState(false);
   const [optBest, setOptBest] = useState<EvalResult | null>(null);
   const [autoOptJam, setAutoOptJam] = useState(loadAutoOptJam);
+  const [autoOptOpts, setAutoOptOpts] = useState(loadAutoOptJamOpts);
   const [autoOptReason, setAutoOptReason] = useState<string | null>(null);
   const [autoCooldownLeft, setAutoCooldownLeft] = useState(0);
   const [tick, setTick] = useState(0);
@@ -128,12 +185,14 @@ export function App() {
   const optRunningRef = useRef(optRunning);
   const jamSinceRef = useRef<number | null>(null);
   const cooldownUntilRef = useRef(0);
+  const autoOptOptsRef = useRef(autoOptOpts);
   playingRef.current = playing;
   speedRef.current = speed;
   selectedRef.current = selected;
   hoverRef.current = hover;
   congestionRef.current = congestion;
   optRunningRef.current = optRunning;
+  autoOptOptsRef.current = autoOptOpts;
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -224,7 +283,7 @@ export function App() {
             setOptRunning(false);
             cooldownUntilRef.current = Math.max(
               cooldownUntilRef.current,
-              s.t + AUTO_OPT_COOLDOWN_S,
+              s.t + autoOptOptsRef.current.cooldownS,
             );
             if (r.best) {
               s.applyPlan(r.best.plan, true);
@@ -326,7 +385,10 @@ export function App() {
     setOptBest(null);
     if (opts?.auto) {
       const tNow = sim.t;
-      cooldownUntilRef.current = Math.max(cooldownUntilRef.current, tNow + AUTO_OPT_COOLDOWN_S);
+      cooldownUntilRef.current = Math.max(
+        cooldownUntilRef.current,
+        tNow + autoOptOptsRef.current.cooldownS,
+      );
       jamSinceRef.current = null;
       if (opts.reason) setAutoOptReason(opts.reason);
     }
@@ -366,6 +428,7 @@ export function App() {
       return;
     }
     const tNow = metrics.t;
+    const opts = autoOptOpts;
     const cdLeft = Math.max(0, Math.ceil(cooldownUntilRef.current - tNow));
     setAutoCooldownLeft(cdLeft);
 
@@ -378,9 +441,22 @@ export function App() {
       return;
     }
 
-    const waitJam = metrics.avgWait >= AUTO_OPT_WAIT_THRESH;
-    const queueJam = metrics.queued >= AUTO_OPT_QUEUE_THRESH;
-    if (!waitJam && !queueJam) {
+    const checks: { ok: boolean; label: string }[] = [];
+    if (opts.useWait) {
+      const ok = metrics.avgWait >= opts.waitThresh;
+      checks.push({ ok, label: `avgWait ${metrics.avgWait.toFixed(0)}s` });
+    }
+    if (opts.useQueue) {
+      const ok = metrics.queued >= opts.queueThresh;
+      checks.push({ ok, label: `queued ${metrics.queued.toFixed(0)}` });
+    }
+    if (checks.length === 0) {
+      jamSinceRef.current = null;
+      return;
+    }
+    const jammed =
+      opts.combine === 'and' ? checks.every((c) => c.ok) : checks.some((c) => c.ok);
+    if (!jammed) {
       jamSinceRef.current = null;
       return;
     }
@@ -389,20 +465,39 @@ export function App() {
       jamSinceRef.current = tNow;
       return;
     }
-    if (tNow - jamSinceRef.current < AUTO_OPT_HOLD_S) return;
+    if (tNow - jamSinceRef.current < opts.holdS) return;
 
-    const reasonParts: string[] = [];
-    if (waitJam) reasonParts.push(`avgWait ${metrics.avgWait.toFixed(0)}s`);
-    if (queueJam) reasonParts.push(`queued ${metrics.queued.toFixed(0)}`);
-    const reason = reasonParts.join(' · ');
+    const reason = checks.filter((c) => c.ok).map((c) => c.label).join(' · ');
     jamSinceRef.current = null;
     startOptimize({ auto: true, reason });
-  }, [autoOptJam, metrics.t, metrics.avgWait, metrics.queued]);
+  }, [autoOptJam, autoOptOpts, metrics.t, metrics.avgWait, metrics.queued]);
 
   const setAutoOptJamPersist = (on: boolean) => {
     setAutoOptJam(on);
     saveAutoOptJam(on);
     if (!on) jamSinceRef.current = null;
+  };
+
+  const patchAutoOptOpts = (patch: Partial<AutoOptJamOpts>) => {
+    setAutoOptOpts((prev) => {
+      let next: AutoOptJamOpts = { ...prev, ...patch };
+      if (!next.useWait && !next.useQueue) {
+        // Keep the last metric that was on (prefer the one not being turned off).
+        if (patch.useWait === false) next = { ...next, useQueue: true };
+        else if (patch.useQueue === false) next = { ...next, useWait: true };
+        else next = { ...next, useWait: true };
+      }
+      next = {
+        ...next,
+        waitThresh: clamp(next.waitThresh, 30, 180),
+        queueThresh: clamp(next.queueThresh, 100, 800),
+        holdS: clamp(next.holdS, 3, 60),
+        cooldownS: clamp(next.cooldownS, 30, 600),
+        combine: next.combine === 'and' ? 'and' : 'or',
+      };
+      saveAutoOptJamOpts(next);
+      return next;
+    });
   };
 
   const dragRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
@@ -741,12 +836,112 @@ export function App() {
               {t('opt.autoJam.hint')}
             </p>
             {autoOptJam && (
-              <p className="hint mono" style={{ marginTop: 4 }}>
-                {autoCooldownLeft > 0
-                  ? t('opt.auto.cooldown', { s: autoCooldownLeft })
-                  : t('opt.auto.idle')}
-                {autoOptReason ? ` · ${t('opt.auto.last', { reason: autoOptReason })}` : ''}
-              </p>
+              <>
+                <div className="auto-opt-opts">
+                  <Tip tipKey="tip.opt.auto.useWait" fill>
+                    <div className="toggleline" style={{ marginTop: 8 }}>
+                      {t('opt.auto.useWait')}
+                      <div
+                        className={`toggle ${autoOptOpts.useWait ? 'on' : ''}`}
+                        onClick={() => patchAutoOptOpts({ useWait: !autoOptOpts.useWait })}
+                        role="switch"
+                        aria-checked={autoOptOpts.useWait}
+                      >
+                        <i />
+                      </div>
+                    </div>
+                  </Tip>
+                  {autoOptOpts.useWait && (
+                    <Slider
+                      label={t('opt.auto.waitThresh')}
+                      value={autoOptOpts.waitThresh}
+                      min={30}
+                      max={180}
+                      step={5}
+                      fmt={(v) => `${Math.round(v)}s`}
+                      onChange={(waitThresh) => patchAutoOptOpts({ waitThresh })}
+                      tipKey="tip.opt.auto.waitThresh"
+                    />
+                  )}
+                  <Tip tipKey="tip.opt.auto.useQueue" fill>
+                    <div className="toggleline">
+                      {t('opt.auto.useQueue')}
+                      <div
+                        className={`toggle ${autoOptOpts.useQueue ? 'on' : ''}`}
+                        onClick={() => patchAutoOptOpts({ useQueue: !autoOptOpts.useQueue })}
+                        role="switch"
+                        aria-checked={autoOptOpts.useQueue}
+                      >
+                        <i />
+                      </div>
+                    </div>
+                  </Tip>
+                  {autoOptOpts.useQueue && (
+                    <Slider
+                      label={t('opt.auto.queueThresh')}
+                      value={autoOptOpts.queueThresh}
+                      min={100}
+                      max={800}
+                      step={25}
+                      fmt={(v) => `${Math.round(v)}`}
+                      onChange={(queueThresh) => patchAutoOptOpts({ queueThresh })}
+                      tipKey="tip.opt.auto.queueThresh"
+                    />
+                  )}
+                  <Slider
+                    label={t('opt.auto.hold')}
+                    value={autoOptOpts.holdS}
+                    min={3}
+                    max={60}
+                    step={1}
+                    fmt={(v) => `${Math.round(v)}s`}
+                    onChange={(holdS) => patchAutoOptOpts({ holdS })}
+                    tipKey="tip.opt.auto.hold"
+                  />
+                  <Slider
+                    label={t('opt.auto.cooldownLabel')}
+                    value={autoOptOpts.cooldownS}
+                    min={30}
+                    max={600}
+                    step={10}
+                    fmt={(v) => `${Math.round(v)}s`}
+                    onChange={(cooldownS) => patchAutoOptOpts({ cooldownS })}
+                    tipKey="tip.opt.auto.cooldown"
+                  />
+                  <Tip tipKey="tip.opt.auto.combine" fill>
+                    <div className="auto-opt-combine">
+                      <span className="auto-opt-combine-label">{t('opt.auto.triggerWhen')}</span>
+                      <div className="seg compact">
+                        <button
+                          type="button"
+                          className={autoOptOpts.combine === 'or' ? 'active' : ''}
+                          onClick={() => patchAutoOptOpts({ combine: 'or' })}
+                        >
+                          {t('opt.auto.combineOr')}
+                        </button>
+                        <button
+                          type="button"
+                          className={autoOptOpts.combine === 'and' ? 'active' : ''}
+                          onClick={() => patchAutoOptOpts({ combine: 'and' })}
+                        >
+                          {t('opt.auto.combineAnd')}
+                        </button>
+                      </div>
+                    </div>
+                  </Tip>
+                  {!(autoOptOpts.useWait && autoOptOpts.useQueue) && (
+                    <p className="hint" style={{ marginTop: 4 }}>
+                      {t('opt.auto.needOne')}
+                    </p>
+                  )}
+                </div>
+                <p className="hint mono" style={{ marginTop: 6 }}>
+                  {autoCooldownLeft > 0
+                    ? t('opt.auto.cooldown', { s: autoCooldownLeft })
+                    : t('opt.auto.idle')}
+                  {autoOptReason ? ` · ${t('opt.auto.last', { reason: autoOptReason })}` : ''}
+                </p>
+              </>
             )}
             <Tip tipKey="tip.opt.junction" fill>
               <button

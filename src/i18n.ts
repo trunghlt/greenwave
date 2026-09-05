@@ -86,11 +86,21 @@ export const vi = {
   'opt.best': 'Kế hoạch tốt nhất · chờ {wait}s · {thr} xe/h · cycle {cycle}s',
   'opt.autoJam': 'Tự tối ưu khi ùn',
   'opt.autoJam.hint':
-    'Khi chờ TB hoặc tải hàng chờ cao liên tục, chạy tối ưu mạng một lần rồi nghỉ (cooldown).',
+    'Khi điều kiện ùn (chờ TB / hàng chờ) giữ đủ lâu, chạy tối ưu mạng một lần rồi nghỉ (cooldown). Chỉnh ngưỡng bên dưới.',
   'opt.auto.jam': 'Auto: phát hiện ùn — đang tìm…',
   'opt.auto.last': 'Lần auto: {reason}',
   'opt.auto.cooldown': 'Cooldown còn {s}s sim',
   'opt.auto.idle': 'Auto sẵn sàng',
+  'opt.auto.useWait': 'Dùng chờ TB',
+  'opt.auto.waitThresh': 'Ngưỡng chờ',
+  'opt.auto.useQueue': 'Dùng hàng chờ',
+  'opt.auto.queueThresh': 'Ngưỡng hàng',
+  'opt.auto.hold': 'Giữ ùn',
+  'opt.auto.cooldownLabel': 'Cooldown',
+  'opt.auto.triggerWhen': 'Kích hoạt khi',
+  'opt.auto.combineOr': 'Một trong hai',
+  'opt.auto.combineAnd': 'Cả hai',
+  'opt.auto.needOne': 'Cần bật ít nhất chờ TB hoặc hàng chờ.',
 
   'ab.title': 'A / B so với mốc',
   'ab.wait': 'Chờ',
@@ -249,7 +259,21 @@ export const vi = {
   'tip.opt.status':
     'Tiến trình CMA-ES: mẫu / thế hệ, hoặc kết quả đã áp (chờ TB, lưu lượng).',
   'tip.opt.autoJam':
-    'Bật để CMA-ES mạng tự chạy khi chờ TB ≥ 90s hoặc hàng chờ ≥ 400 trong ~10s sim liên tiếp. Cooldown 180s sim sau mỗi lần chạy.',
+    'Bật để CMA-ES mạng tự chạy khi điều kiện ùn giữ đủ lâu. Ngưỡng, giữ ùn, cooldown và OR/AND chỉnh được bên dưới; lưu localStorage.',
+  'tip.opt.auto.useWait':
+    'Bật để dùng chờ trung bình (avgWait) làm tín hiệu ùn. Phải giữ ít nhất một trong chờ TB hoặc hàng chờ.',
+  'tip.opt.auto.waitThresh':
+    'Ngưỡng chờ TB (giây sim). Vượt ngưỡng này được tính là ùn theo metric chờ.',
+  'tip.opt.auto.useQueue':
+    'Bật để dùng tải hàng chờ (queued) làm tín hiệu ùn. Phải giữ ít nhất một metric.',
+  'tip.opt.auto.queueThresh':
+    'Ngưỡng tải hàng chờ (áp lực mạng). Vượt ngưỡng = ùn theo metric hàng.',
+  'tip.opt.auto.hold':
+    'Số giây sim mà điều kiện ùn phải giữ liên tục trước khi kích hoạt CMA-ES (tránh nhiễu ngắn).',
+  'tip.opt.auto.cooldown':
+    'Số giây sim nghỉ sau khi bắt đầu/xong auto-opt — không kích hoạt lại trong khoảng này.',
+  'tip.opt.auto.combine':
+    'Một trong hai (OR): đủ một metric đã bật. Cả hai (AND): mọi metric đã bật phải vượt ngưỡng cùng lúc.',
 
   'tip.chip.avgWait':
     'Chờ trung bình của chuyến đã về đích (giây). Chưa ổn định khi còn ít chuyến xong.',
@@ -381,11 +405,21 @@ export const en: { [K in MsgKey]: string } = {
   'opt.best': 'Best plan · wait {wait}s · {thr} veh/h · cycle {cycle}s',
   'opt.autoJam': 'Auto-optimize on jam',
   'opt.autoJam.hint':
-    'When avg wait or queue load stays high, run network Optimize once, then cooldown.',
+    'When jam conditions (avg wait / queue) hold long enough, run network Optimize once, then cooldown. Tune thresholds below.',
   'opt.auto.jam': 'Auto: jam detected — searching…',
   'opt.auto.last': 'Last auto: {reason}',
   'opt.auto.cooldown': 'Cooldown {s}s sim left',
   'opt.auto.idle': 'Auto ready',
+  'opt.auto.useWait': 'Use avg wait',
+  'opt.auto.waitThresh': 'Wait thresh',
+  'opt.auto.useQueue': 'Use queue load',
+  'opt.auto.queueThresh': 'Queue thresh',
+  'opt.auto.hold': 'Hold time',
+  'opt.auto.cooldownLabel': 'Cooldown',
+  'opt.auto.triggerWhen': 'Trigger when',
+  'opt.auto.combineOr': 'Either',
+  'opt.auto.combineAnd': 'Both',
+  'opt.auto.needOne': 'Keep at least avg wait or queue load enabled.',
 
   'ab.title': 'A / B vs baseline',
   'ab.wait': 'Wait',
@@ -544,7 +578,21 @@ export const en: { [K in MsgKey]: string } = {
   'tip.opt.status':
     'CMA-ES progress: samples / generations, or the applied result (avg wait, throughput).',
   'tip.opt.autoJam':
-    'When on, network CMA-ES auto-runs if avg wait ≥ 90s or queue load ≥ 400 for ~10 consecutive sim-seconds. 180s sim cooldown after each run.',
+    'When on, network CMA-ES auto-runs once jam conditions hold long enough. Thresholds, hold, cooldown, and OR/AND are editable below; saved to localStorage.',
+  'tip.opt.auto.useWait':
+    'Include avg wait (avgWait) as a jam signal. At least one of avg wait or queue load must stay on.',
+  'tip.opt.auto.waitThresh':
+    'Avg-wait threshold in sim-seconds. Crossing it counts as wait-jam.',
+  'tip.opt.auto.useQueue':
+    'Include queue load (queued) as a jam signal. Keep at least one metric enabled.',
+  'tip.opt.auto.queueThresh':
+    'Queue-load threshold (network pressure). Crossing it counts as queue-jam.',
+  'tip.opt.auto.hold':
+    'Sim-seconds the jam condition must persist before firing CMA-ES (filters brief spikes).',
+  'tip.opt.auto.cooldown':
+    'Sim-seconds to wait after auto-opt starts/finishes before another trigger.',
+  'tip.opt.auto.combine':
+    'Either (OR): any enabled metric over threshold. Both (AND): every enabled metric must be over threshold together.',
 
   'tip.chip.avgWait':
     'Mean wait of completed trips (seconds). Unstable until enough trips finish.',
