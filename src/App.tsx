@@ -12,6 +12,17 @@ import { NODE_COUNT } from './sim/network';
 import { Tutorial } from './Tutorial';
 import { useI18n, type MsgKey, type OptMsg } from './i18n';
 import { Tip } from './Tooltip';
+import {
+  clearOptLogbook,
+  formatClock,
+  loadOptLogbook,
+  pct,
+  prependOptLogEntry,
+  round1,
+  type OptLogEntry,
+  type OptMetricsSnap,
+  type OptTimingSnap,
+} from './optLogbook';
 
 const SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
 const DT = 1 / 20;
@@ -40,6 +51,79 @@ const AUTO_OPT_OPTS_DEFAULT: AutoOptJamOpts = {
   cooldownS: 180,
   combine: 'or',
 };
+
+type OptRunMeta = {
+  scope: 'junction' | 'network';
+  source: 'manual' | 'auto';
+  scenario: ScenarioId;
+  seed: number;
+  sigId?: number;
+  junctionName?: string;
+  before?: OptTimingSnap;
+};
+
+function metricsSnap(ev: {
+  avgWait: number;
+  p95Wait: number;
+  throughput: number;
+  stops: number;
+  fitness: number;
+}): OptMetricsSnap {
+  return {
+    avgWait: ev.avgWait,
+    p95Wait: ev.p95Wait,
+    throughput: ev.throughput,
+    stops: ev.stops,
+    fitness: ev.fitness,
+  };
+}
+
+function timingFromPlan(
+  plan: { cycle: number; splitNS: number[]; offset: number[]; cycles?: number[] },
+  sigId: number,
+): OptTimingSnap {
+  const cycle = plan.cycles && plan.cycles.length ? plan.cycles[sigId] ?? plan.cycle : plan.cycle;
+  return {
+    cycle,
+    splitNS: plan.splitNS[sigId] ?? 0.5,
+    offset: plan.offset[sigId] ?? 0,
+  };
+}
+
+function buildOptLogEntry(meta: OptRunMeta, best: EvalResult, baseline: EvalResult | null | undefined, simT: number): OptLogEntry {
+  const metrics = metricsSnap(best);
+  const baselineMetrics = baseline ? metricsSnap(baseline) : undefined;
+  const id =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${meta.sigId ?? 'net'}`;
+  const entry: OptLogEntry = {
+    id,
+    at: new Date().toISOString(),
+    simT,
+    scope: meta.scope,
+    source: meta.source,
+    scenario: meta.scenario,
+    seed: meta.seed,
+    metrics,
+    baselineMetrics,
+  };
+  if (meta.scope === 'junction' && meta.sigId !== undefined) {
+    entry.sigId = meta.sigId;
+    entry.junctionName = meta.junctionName;
+    entry.before = meta.before;
+    entry.after = timingFromPlan(best.plan, meta.sigId);
+    entry.deltas = {
+      cycle: entry.after.cycle - (entry.before?.cycle ?? entry.after.cycle),
+      split: entry.after.splitNS - (entry.before?.splitNS ?? entry.after.splitNS),
+      offset: entry.after.offset - (entry.before?.offset ?? entry.after.offset),
+      avgWait: baselineMetrics ? metrics.avgWait - baselineMetrics.avgWait : undefined,
+    };
+  } else if (baselineMetrics) {
+    entry.deltas = { avgWait: metrics.avgWait - baselineMetrics.avgWait };
+  }
+  return entry;
+}
 
 function clamp(n: number, lo: number, hi: number) {
   return Math.min(hi, Math.max(lo, n));
@@ -176,6 +260,8 @@ export function App() {
   const [tick, setTick] = useState(0);
   const [seed, setSeed] = useState(2026);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [optLogbook, setOptLogbook] = useState<OptLogEntry[]>(loadOptLogbook);
+  const [optLogExpanded, setOptLogExpanded] = useState<Record<string, boolean>>({});
 
   const playingRef = useRef(playing);
   const speedRef = useRef(speed);
@@ -186,6 +272,7 @@ export function App() {
   const jamSinceRef = useRef<number | null>(null);
   const cooldownUntilRef = useRef(0);
   const autoOptOptsRef = useRef(autoOptOpts);
+  const optRunMetaRef = useRef<OptRunMeta | null>(null);
   playingRef.current = playing;
   speedRef.current = speed;
   selectedRef.current = selected;
@@ -296,7 +383,14 @@ export function App() {
                   thr: Math.round(r.best.throughput),
                 },
               });
+              const meta = optRunMetaRef.current;
+              if (meta) {
+                const baseline = opt.snapshot().baseline;
+                const entry = buildOptLogEntry(meta, r.best, baseline, s.t);
+                setOptLogbook((prev) => prependOptLogEntry(prev, entry));
+              }
             }
+            optRunMetaRef.current = null;
             break;
           }
         }
@@ -378,6 +472,12 @@ export function App() {
     const opt = new CMAESOptimizer(scenario, custom, seed, sim.plan.cycle, { scope: 'network' });
     optRef.current = opt;
     optScopeRef.current = 'network';
+    optRunMetaRef.current = {
+      scope: 'network',
+      source: opts?.auto ? 'auto' : 'manual',
+      scenario,
+      seed,
+    };
     opt.start();
     setOptRunning(true);
     setOptProg(0);
@@ -397,7 +497,15 @@ export function App() {
   const startOptimizeJunction = () => {
     const n = selected >= 0 ? sim.net.nodes[selected] : null;
     if (!n || !n.signalized || n.sigId < 0) return;
+    if (optRunningRef.current) return;
+    optRunningRef.current = true;
     if (!baseline) captureBaseline();
+    const ix = sim.ix[n.sigId];
+    const before: OptTimingSnap = {
+      cycle: ix.cycle,
+      splitNS: ix.splitNS,
+      offset: ix.offset,
+    };
     const basePlan = {
       cycle: sim.plan.cycle,
       splitNS: sim.plan.splitNS.slice(),
@@ -414,11 +522,30 @@ export function App() {
     });
     optRef.current = opt;
     optScopeRef.current = 'junction';
+    optRunMetaRef.current = {
+      scope: 'junction',
+      source: 'manual',
+      scenario,
+      seed,
+      sigId: n.sigId,
+      junctionName: n.name,
+      before,
+    };
     opt.start();
     setOptRunning(true);
     setOptProg(0);
     setOptMsg({ key: 'opt.seeding' });
     setOptBest(null);
+  };
+
+  const clearOptLog = () => {
+    if (!window.confirm(t('opt.log.clearConfirm'))) return;
+    setOptLogbook(clearOptLogbook());
+    setOptLogExpanded({});
+  };
+
+  const toggleOptLogEntry = (id: string) => {
+    setOptLogExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   useEffect(() => {
@@ -971,6 +1098,156 @@ export function App() {
                     optBest.plan.cycles && node && node.signalized
                       ? optBest.plan.cycles[node.sigId]
                       : optBest.plan.cycle,
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="card opt-logbook-card">
+            <div className="opt-logbook-head">
+              <Tip tipKey="tip.opt.logbook" preferBelow>
+                <h3>{t('opt.log.title')}</h3>
+              </Tip>
+              <button
+                type="button"
+                className="btn secondary opt-logbook-clear"
+                disabled={optLogbook.length === 0}
+                onClick={clearOptLog}
+              >
+                {t('opt.log.clear')}
+              </button>
+            </div>
+            {optLogbook.length === 0 ? (
+              <p className="hint">{t('opt.log.empty')}</p>
+            ) : (
+              <div className="opt-logbook-list">
+                {optLogbook.map((e) => {
+                  const open = !!optLogExpanded[e.id];
+                  const clock = formatClock(e.at);
+                  let summary: string;
+                  if (e.scope === 'junction') {
+                    const name = e.junctionName || `sig ${e.sigId}`;
+                    const c0 = e.before?.cycle;
+                    const c1 = e.after?.cycle;
+                    const s0 = e.before ? pct(e.before.splitNS) : '—';
+                    const s1 = e.after ? pct(e.after.splitNS) : '—';
+                    const w0 = e.baselineMetrics ? Math.round(e.baselineMetrics.avgWait) : null;
+                    const w1 = Math.round(e.metrics.avgWait);
+                    const waitPart =
+                      w0 != null ? `${t('opt.log.waitShort')} ${w0}→${w1}s` : `${t('opt.log.waitShort')} ${w1}s`;
+                    summary = `${clock} · ${name} · cycle ${c0 ?? '—'}→${c1 ?? '—'} · split ${s0}→${s1} · ${waitPart}`;
+                  } else {
+                    const tag =
+                      e.source === 'auto'
+                        ? `${t('opt.log.network')} (${t('opt.log.source.auto')})`
+                        : t('opt.log.network');
+                    summary = `${clock} · ${tag} · ${t('opt.log.waitShort')} ${Math.round(e.metrics.avgWait)}s · ${Math.round(e.metrics.throughput)} ${t('unit.vehH')}`;
+                  }
+                  return (
+                    <div key={e.id} className={`opt-logbook-entry ${open ? 'open' : ''}`}>
+                      <button
+                        type="button"
+                        className="opt-logbook-summary"
+                        onClick={() => toggleOptLogEntry(e.id)}
+                        aria-expanded={open}
+                      >
+                        <span className="opt-logbook-chevron">{open ? '▾' : '▸'}</span>
+                        <span className="opt-logbook-line">{summary}</span>
+                      </button>
+                      {open && (
+                        <div className="opt-logbook-detail">
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.scope')}</span>
+                            <b>{e.scope === 'junction' ? t('opt.log.scope.junction') : t('opt.log.scope.network')}</b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.source')}</span>
+                            <b>{e.source === 'auto' ? t('opt.log.source.auto') : t('opt.log.source.manual')}</b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.simT')}</span>
+                            <b>{Math.round(e.simT)}s</b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.scenario')}</span>
+                            <b>{e.scenario}</b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.seed')}</span>
+                            <b>{e.seed}</b>
+                          </div>
+                          {e.scope === 'junction' && (
+                            <>
+                              {e.junctionName && (
+                                <div className="opt-logbook-kv">
+                                  <span>{t('opt.log.junction')}</span>
+                                  <b>{e.junctionName}</b>
+                                </div>
+                              )}
+                              {e.before && e.after && (
+                                <>
+                                  <div className="opt-logbook-kv">
+                                    <span>{t('ix.cycle')}</span>
+                                    <b>
+                                      {e.before.cycle}→{e.after.cycle}
+                                      {e.deltas?.cycle !== undefined ? ` (Δ${e.deltas.cycle > 0 ? '+' : ''}${e.deltas.cycle})` : ''}
+                                    </b>
+                                  </div>
+                                  <div className="opt-logbook-kv">
+                                    <span>{t('ix.split')}</span>
+                                    <b>
+                                      {pct(e.before.splitNS)}→{pct(e.after.splitNS)}
+                                      {e.deltas?.split !== undefined
+                                        ? ` (Δ${e.deltas.split > 0 ? '+' : ''}${Math.round(e.deltas.split * 100)}pp)`
+                                        : ''}
+                                    </b>
+                                  </div>
+                                  <div className="opt-logbook-kv">
+                                    <span>{t('ix.offset')}</span>
+                                    <b>
+                                      {round1(e.before.offset)}→{round1(e.after.offset)}s
+                                      {e.deltas?.offset !== undefined
+                                        ? ` (Δ${e.deltas.offset > 0 ? '+' : ''}${round1(e.deltas.offset)})`
+                                        : ''}
+                                    </b>
+                                  </div>
+                                </>
+                              )}
+                            </>
+                          )}
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.avgWait')}</span>
+                            <b>
+                              {e.baselineMetrics
+                                ? `${round1(e.baselineMetrics.avgWait)}→${round1(e.metrics.avgWait)}s`
+                                : `${round1(e.metrics.avgWait)}s`}
+                              {e.deltas?.avgWait !== undefined
+                                ? ` (Δ${e.deltas.avgWait > 0 ? '+' : ''}${round1(e.deltas.avgWait)})`
+                                : ''}
+                            </b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.p95')}</span>
+                            <b>{round1(e.metrics.p95Wait)}s</b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.throughput')}</span>
+                            <b>
+                              {Math.round(e.metrics.throughput)} {t('unit.vehH')}
+                            </b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.stops')}</span>
+                            <b>{round1(e.metrics.stops)}</b>
+                          </div>
+                          <div className="opt-logbook-kv">
+                            <span>{t('opt.log.fitness')}</span>
+                            <b>{round1(e.metrics.fitness)}</b>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
                 })}
               </div>
             )}

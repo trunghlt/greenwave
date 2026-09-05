@@ -102,6 +102,28 @@ export const vi = {
   'opt.auto.combineAnd': 'Cả hai',
   'opt.auto.needOne': 'Cần bật ít nhất chờ TB hoặc hàng chờ.',
 
+  'opt.log.title': 'Nhật ký tối ưu',
+  'opt.log.clear': 'Xóa',
+  'opt.log.clearConfirm': 'Xóa toàn bộ nhật ký tối ưu?',
+  'opt.log.empty': 'Chưa có lần tối ưu nào — chạy Tối ưu nút này hoặc Tối ưu ngay.',
+  'opt.log.network': 'Mạng',
+  'opt.log.scope': 'Phạm vi',
+  'opt.log.scope.junction': 'Nút',
+  'opt.log.scope.network': 'Mạng',
+  'opt.log.source': 'Nguồn',
+  'opt.log.source.manual': 'thủ công',
+  'opt.log.source.auto': 'auto',
+  'opt.log.simT': 'Sim t',
+  'opt.log.scenario': 'Kịch bản',
+  'opt.log.seed': 'Seed',
+  'opt.log.junction': 'Nút',
+  'opt.log.waitShort': 'chờ',
+  'opt.log.avgWait': 'Chờ TB',
+  'opt.log.p95': 'p95 chờ',
+  'opt.log.throughput': 'Lưu lượng',
+  'opt.log.stops': 'Dừng / chuyến',
+  'opt.log.fitness': 'Fitness',
+
   'ab.title': 'A / B so với mốc',
   'ab.wait': 'Chờ',
   'ab.throughput': 'Lưu lượng',
@@ -274,6 +296,8 @@ export const vi = {
     'Số giây sim nghỉ sau khi bắt đầu/xong auto-opt — không kích hoạt lại trong khoảng này.',
   'tip.opt.auto.combine':
     'Một trong hai (OR): đủ một metric đã bật. Cả hai (AND): mọi metric đã bật phải vượt ngưỡng cùng lúc.',
+  'tip.opt.logbook':
+    'Ghi mỗi lần CMA-ES xong (ưu tiên chi tiết nút: cycle/split/offset trước→sau). Lưu localStorage, tối đa 50 mục.',
 
   'tip.chip.avgWait':
     'Chờ trung bình của chuyến đã về đích (giây). Chưa ổn định khi còn ít chuyến xong.',
@@ -420,6 +444,28 @@ export const en: { [K in MsgKey]: string } = {
   'opt.auto.combineOr': 'Either',
   'opt.auto.combineAnd': 'Both',
   'opt.auto.needOne': 'Keep at least avg wait or queue load enabled.',
+
+  'opt.log.title': 'Opt logbook',
+  'opt.log.clear': 'Clear',
+  'opt.log.clearConfirm': 'Clear the entire optimization logbook?',
+  'opt.log.empty': 'No runs yet — use Optimize this junction or Optimize now.',
+  'opt.log.network': 'Network',
+  'opt.log.scope': 'Scope',
+  'opt.log.scope.junction': 'Junction',
+  'opt.log.scope.network': 'Network',
+  'opt.log.source': 'Source',
+  'opt.log.source.manual': 'manual',
+  'opt.log.source.auto': 'auto',
+  'opt.log.simT': 'Sim t',
+  'opt.log.scenario': 'Scenario',
+  'opt.log.seed': 'Seed',
+  'opt.log.junction': 'Junction',
+  'opt.log.waitShort': 'wait',
+  'opt.log.avgWait': 'Avg wait',
+  'opt.log.p95': 'p95 wait',
+  'opt.log.throughput': 'Throughput',
+  'opt.log.stops': 'Stops / trip',
+  'opt.log.fitness': 'Fitness',
 
   'ab.title': 'A / B vs baseline',
   'ab.wait': 'Wait',
@@ -593,6 +639,8 @@ export const en: { [K in MsgKey]: string } = {
     'Sim-seconds to wait after auto-opt starts/finishes before another trigger.',
   'tip.opt.auto.combine':
     'Either (OR): any enabled metric over threshold. Both (AND): every enabled metric must be over threshold together.',
+  'tip.opt.logbook':
+    'Logs each finished CMA-ES run (junction entries are detailed: cycle/split/offset before→after). Stored in localStorage, capped at 50.',
 
   'tip.chip.avgWait':
     'Mean wait of completed trips (seconds). Unstable until enough trips finish.',
